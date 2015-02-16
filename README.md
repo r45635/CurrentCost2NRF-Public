@@ -1,5 +1,5 @@
 #CurrentCost2NRF
-![Alt text] (screenshoot/2015-02-15 17.13.43.png "Cons'Elec") 
+![Alt text] (screenshoot/Home.bmp "Cons'Elec") 
 ## DIY - Current Cost Home Energy Monitoring
 
 ### Project context:

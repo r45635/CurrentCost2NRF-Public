@@ -1,5 +1,6 @@
-CurrentCost2NRF-Public
-# DIY - Current Cost Home Energy Monitoring
+#CurrentCost2NRF
+![Alt text] (screenshoot/2015-02-15 17.13.43.png "Cons'Elec") 
+## DIY - Current Cost Home Energy Monitoring
 
 ### Project context:
 I wish remotely monitoring my home electrical energy consumption. I currently have installed a Curret Cost with two sensor:
@@ -69,3 +70,42 @@ CREATE TABLE IF NOT EXISTS CC_SENSOR_HIST (timestamp DATETIME, id INTEGER, hist_
 
   For further details, have a look at MaStationv2a.cpp example file.
 
+### Preparing database information for easy and fast reporting
+Firs of all, as i wish to visualize low cost period versus standard cost time period energy. I've to add a new table to afford this.
+```
+CREATE TABLE IF NOT EXISTS `CC_COST` (`id` int(11) NOT NULL AUTO_INCREMENT, `PERIOD` text NOT NULL, `START` time NOT NULL,   `END` time NOT NULL,`COST` float NOT NULL,PRIMARY KEY (`id`));
+```
+also, to facilitate reporting management two specific tables have been also added. Those tables will be automatically filled, updated in mysqld database trough scheduler queries.
+- CC_SENSOR_DYN_REPORT
+following is sql table code creation followed by the scheduler code.
+```
+CREATE TABLE IF NOT EXISTS `CC_SENSOR_DYN_REPORT` ( `datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,`sensor` int(11) NOT NULL,  `period` varchar(2) NOT NULL,  `value_max` float NOT NULL,  `value` float NOT NULL, `value_min` float NOT NULL, PRIMARY KEY (`datetime`,`sensor`,`period`), KEY `sensor` (`sensor`), KEY `period` (`period`), KEY `value` (`value`));
+```
+```
+CREATE EVENT `UPDATE_CC_SENSOR_DYN_REPORT` ON SCHEDULE EVERY 5 MINUTE ON COMPLETION NOT PRESERVE ENABLE DO INSERT INTO CC_SENSOR_DYN_REPORT
+SELECT DATE_FORMAT(A1.timestamp,'%Y-%m-%d %H:%i:00') as datetime, A1.ID as sensor, A2.PERIOD as period, MAX(A1.value) as value_max, AVG(A1.value) as value, MIN(A1.value) as value_min 
+FROM CC_SENSOR_DYN AS A1, CC_COST AS A2 
+WHERE (A1.timestamp > DATE_SUB((SELECT MAX(datetime) FROM CC_SENSOR_DYN_REPORT), INTERVAL 1 HOUR)) AND ((TIME(A1.timestamp) >= A2.START) AND (TIME(A1.timestamp) < A2.END)) GROUP BY  1,2,3 
+ON DUPLICATE KEY UPDATE value = value, value_max=value_max, value_min = value_min;
+```
+- CC_SENSOR_HIST_REPORT
+following is sql table code creation followed by the scheduler code.
+```
+CREATE TABLE IF NOT EXISTS `CC_SENSOR_HIST_REPORT` (`starttime` datetime NOT NULL, `endtime` datetime NOT NULL, `sensor` int(11) NOT NULL, `period` varchar(1) NOT NULL, `value` float NOT NULL,  PRIMARY KEY (`starttime`,`endtime`,`sensor`,`period`),   KEY `sensor` (`sensor`),   KEY `period` (`period`) );
+```
+3 kinds events of are needed to be setup in order to manage hourly, daily and monthly data. below is the example of the daily event.
+```
+CREATE EVENT `UPDATE_CC_SENSOR_HIST_REPORT_D` ON SCHEDULE EVERY 2 HOUR ON COMPLETION NOT PRESERVE ENABLE DO INSERT INTO STATION_DATA.`CC_SENSOR_HIST_REPORT`  
+SELECT STR_TO_DATE(DATE_FORMAT(DATE_SUB(timestamp, INTERVAL hist_period DAY),'%Y-%m-%d 00:00:00'),'%Y-%m-%d %H:%i:%s')  as starttime, STR_TO_DATE(DATE_FORMAT(DATE_SUB(timestamp, INTERVAL (hist_period-1) DAY),'%Y-%m-%d 00:00:00'),'%Y-%m-%d %H:%i:%s') as endtime, id AS sensor, hist_type AS period, max(value) AS value 
+FROM STATION_DATA.`CC_SENSOR_HIST` 
+WHERE (hist_type = 'd') and (timestamp > DATE_SUB(NOW(), INTERVAL 4 HOUR)) GROUP BY 1,2,3,4
+ON DUPLICATE KEY UPDATE value = value;
+```
+Note: the CurrentCost emits every 2 hours in even hours the history trames. The deep a history emitted is pretty huge and this set redundant data in the CC_SENSOR_HIST data base, another benefit of this event is to be able to obviously add new data but also be able to fullfill missing data due to interuption in the CC transmission. 
+for further details about whole SQL code needed please refers tos localhost.sql file.
+
+### The web interface
+as said before, my wish is to evaluate [Jquery Mobile] (http://jquerymobile.com/) and use [google charts] (https://developers.google.com/chart/).
+Html code involves lot of Javascript to define Google charts options and also ajax technique to retrieve data in JSON format from a PHP query.
+
+For further details, have a look at the html/www folder.

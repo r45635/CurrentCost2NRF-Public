@@ -3,7 +3,7 @@
 ## DIY - Current Cost Home Energy Monitoring
 
 ### Project context:
-I wish remotely monitoring my home electrical energy consumption. I currently have installed a Curret Cost with two sensor:
+I wish remotely monitoring my home electrical energy consumption. I currently have installed a Curret Cost with two sensors:
 - Sensor 0: Monitoring whole home appliance,
 - Sensor 1: Monitoring my whole HVAC installation.
 
@@ -26,7 +26,7 @@ I wish to exploit data stored in mySql database from a very nice html interface 
 
 ### Project Challenge:
 #### Grabbing Serial Data on Arduino:
-For sure the big challenge was the arduino program to developed. CurrentCost (CC128) send data though serial port. The CC128 Display Unit outputs ASCII text over its serial port at 57600 baud. Well, two issues: 
+For sure the big challenge was the arduino program to developed. CurrentCost (CC128) send [XML data] (http://www.currentcost.com/download/Envi%20XML%20v19%20-%202011-01-11.pdf) though serial port. The CC128 Display Unit outputs ASCII text over its serial port at 57600 baud. Well, two issues: 
 - this Arduino (nano) has only one Serial Hardware, usually used for debug and programming. Impossible to use properly Serial Software as the bauds rate was not accurate above 9600bds. Instead, Serial Software will be used at 9600bds debug (versus an incoming speed at 56000bds CC data).
 - the Arduino RAM is very limited: the code has to very optimized to handle data. Storage of large Strings was not possible but the incoming Serial buffer has to be large enough to retrieve the incoming data. He code has been optimized managing immediately the trame input from the CC, this necessary management allowed to finally get a smallest trame to be decoded after. Indeed, historic data are huge amount of ASCII data, the dynamic data trame do not have such issue.
 - the Execution speed is somehow low, I mean spending too much time processing the trame affect the incoming Serial accuracy. I tried to fasten as possible the data management needed to send the payloads through NRF24.

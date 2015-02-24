@@ -64,7 +64,7 @@ radio 1 (gnd)  to uno gnd
 
 RF24 radio(NRF24L01_CE_PIN, NRF24L01_CSN_PIN); // Set up nRF24L01 radio on SPI bus plus pins CE, CSN
 // NRF24 Radio pipe addresses for the 2 nodes to communicate, only one used actually
-const uint64_t pipes[4] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0E3LL }; //
+const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0E3LL }; //
 // Receiver Station @NRF24 => 0xF0F0F0F0E3LL
 // Emitter  Station @NRF24: 0xF0F0F0F0E1LL
 

@@ -344,9 +344,9 @@ function updateDisplayCharts() {
         }, 500);
 	};
 }
- $( window ).resize(function() {
+/* $( window ).resize(function() {
   updateDisplayCharts();
-});
+});*/
 
 $(window).on("orientationchange",function() {
   updateDisplayCharts();
